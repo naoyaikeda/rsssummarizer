@@ -10,6 +10,7 @@ dependencies = [
     "freshrss-api>=2.0.1",
     "google-generativeai>=0.8.5",
     "loguru>=0.7.3",
+    "pyinstaller>=6.13.0",
     "requests>=2.32.3",
     "rich>=14.0.0",
     "setuptools>=80.0.0",

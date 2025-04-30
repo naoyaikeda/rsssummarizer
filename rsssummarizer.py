@@ -1,4 +1,5 @@
 import os
+import sys
 from os.path import join, dirname
 from FreshRSSAggregator import client
 from dotenv import load_dotenv
@@ -22,8 +23,13 @@ def main():
 
     args = parser.parse_args()
 
-    dotenv_path = join(dirname(__file__), '.env')
-    load_dotenv(dotenv_path)
+    if getattr(sys, 'frozen', False):  # EXE実行時
+        base_path = os.path.dirname(sys.executable)
+        dotenv_path = join(base_path, 'rsssummarizer.env')
+    else:  # 通常のスクリプト実行時
+        base_path = os.path.dirname(__file__)
+        dotenv_path = join(base_path, '.env')
+
     rssc = client.FreshRSSAggregator(os.environ.get("HOST"), os.environ.get("USERNAME"), os.environ.get("PASSWORD"), logger=logger)
 
     response = rssc.Fetch(hoursDelta=args.delta_hours, gemini_api_key=os.environ.get("GEMINI_API_KEY"), gemini_model_name=os.environ.get("GEMINI_MODEL_NAME"))

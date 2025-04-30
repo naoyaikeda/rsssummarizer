@@ -1,0 +1,18 @@
+# Pythonスクリプト名（拡張子なし）
+TARGET=rsssummarizer
+
+# PyInstallerのオプション
+PYINSTALLER_OPTS=--onefile --name $(TARGET)
+
+# デフォルトターゲット
+.PHONY: all clean
+
+all: build
+
+# PyInstallerを使ってEXEを作成
+build:
+	pyinstaller $(PYINSTALLER_OPTS) $(TARGET).py
+
+# ビルド成果物を削除
+clean:
+	rm -rf build dist *.spec
