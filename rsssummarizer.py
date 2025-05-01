@@ -18,12 +18,14 @@ def main():
 
     load_dotenv(verbose=True)
 
-    if getattr(sys, 'frozen', False):  # EXE実行時
+    if getattr(sys, 'frozen', False):
         base_path = os.path.dirname(sys.executable)
         dotenv_path = join(base_path, 'rsssummarizer.env')
     else:  # 通常のスクリプト実行時
         base_path = os.path.dirname(__file__)
         dotenv_path = join(base_path, '.env')
+
+    load_dotenv(dotenv_path)
 
     parser = argparse.ArgumentParser(description='Fetch and display information from FreshRSS and Gemini API.')
     parser.add_argument('--delta_hours', type=int, default=24, help='Number of hours to fetch data from.')

@@ -13,25 +13,25 @@ class FreshRSSAggregator():
                 self,
                 host: str = None,
                 username: str = None,
-                password: str = None, 
-                verify_ssl: bool = True, 
+                password: str = None,
+                verify_ssl: bool = True,
                 verbose: bool = False,
                 logger = None
                 ):
-        
+
         self.api_client = FreshRSSAPI(host, username, password, verify_ssl, verbose)
         self.logger = logger
 
         if self.logger:
             self.logger.debug("Initialized")
-    
+
     def Fetch(self, hoursDelta: int = 24, gemini_api_key:str = None, gemini_model_name:str = None):
         if self.logger:
             self.logger.debug("Fetch start")
 
         if gemini_api_key == None:
             gemini_api_key = os.environ.get("GEMINI_API_KEY")
-        
+
         if gemini_model_name == None:
             gemini_model_name = os.environ.get("GEMINI_MODEL_NAME")
 
@@ -48,13 +48,13 @@ class FreshRSSAggregator():
 
         prompt = '\n'.join(prompts)
 
-        response = self.call_gemini(prompt, gemini_model_name)
+        response = self.call_gemini(prompt, gemini_api_key, gemini_model_name)
 
         return(response)
 
     @retry(stop=stop_after_attempt(3) | stop_after_delay(15))
-    def call_gemini(self, prompt, gemini_model_name):
-        genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
+    def call_gemini(self, prompt, gemini_api_key, gemini_model_name):
+        genai.configure(api_key=gemini_api_key)
         gemini_pro = genai.GenerativeModel(gemini_model_name)
 
         response = gemini_pro.generate_content(prompt)
@@ -75,5 +75,5 @@ class FreshRSSAggregator():
         filtered_items = [
             item for item in unread_items
             if datetime.datetime.fromtimestamp(item.created_on_time) > threshold_time]
-            
+
         return filtered_items
