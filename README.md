@@ -1,4 +1,4 @@
-# rssaggregator
+# rsssummarizer
 
 ## 概要
 
@@ -84,8 +84,11 @@ python rsssummarizer.py
 
 rsssummarizer/
 │
-├── FreshRSSAggregator
-│    ├── client.py
+├── RSSInfra
+│    ├── Fetchers
+│    │   ├── freshfeed_client.py
+│    ├── Fetchers
+│         ├── freshfeed_client.py
 ├── rsssummarizer.py           # クライアント/実行スクリプト
 ├── .env                    # 環境変数ファイル (Git管理外にすること)
 ├── pyproject.toml          #
