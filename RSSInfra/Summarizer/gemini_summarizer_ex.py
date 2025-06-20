@@ -11,7 +11,7 @@ class GeminiResult():
 
     def __init__(self, text):
         self.text = text
-
+    
 class GeminiSummarizer():
     def __init__(self, api_key:str, model_name:str):
         self.model_name = model_name

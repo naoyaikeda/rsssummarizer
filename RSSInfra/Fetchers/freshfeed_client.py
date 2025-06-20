@@ -34,7 +34,7 @@ class FreshFeedClient():
         unread_items = None
         unread_items = self.GetUnreads()
 
-        articles = article.Articles(list=unread_items)
+        articles = article.articlesFromResponse(unread_items)
 
         return articles
 

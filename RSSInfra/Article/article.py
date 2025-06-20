@@ -11,12 +11,33 @@ class Article:
 class Articles:
     list = []
 
-    def __init__(self, list = None):
+    def __init__(self):
         self.list = []
 
-        if list:
-            for item in list:
-                self.list.append(Article(item.title, item.created_on_time))
-
     def FilterItemsByHoursDelta(self, hoursDelta:int, now:datetime.datetime):
-        pass
+
+        threshold_time = now - datetime.timedelta(hours=hoursDelta)
+
+        filtered_items = [
+            item for item in self.list
+            if datetime.datetime.fromtimestamp(item.created_on_time) > threshold_time]
+
+        return articlesFromListOfArticle(filtered_items)
+
+def articlesFromResponse(list = None):
+    articles = Articles()
+
+    if list:
+        for item in list:
+            articles.list.append(Article(item.title, item.created_on_time))
+    
+    return articles
+
+def articlesFromListOfArticle(list = None):
+    articles = Articles()
+
+    if list:
+        for item in list:
+            articles.list.append(Article(item.subject, item.created_on_time))
+
+    return articles
