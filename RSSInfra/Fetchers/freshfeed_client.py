@@ -6,7 +6,7 @@ import datetime
 from RSSInfra.Article import article
 from tenacity import retry, stop_after_attempt, stop_after_delay
 
-class FreshRSSAggregator():
+class FreshFeedClient():
     api_client = None
     logger = None
     summarizer = None
@@ -19,30 +19,24 @@ class FreshRSSAggregator():
                 verify_ssl: bool = True,
                 verbose: bool = False,
                 logger = None,
-                summarizer = None
                 ):
 
         self.api_client = FreshRSSAPI(host, username, password, verify_ssl, verbose)
         self.logger = logger
-        self.summarizer = summarizer
 
         if self.logger:
             self.logger.debug("Initialized")
 
-    def Fetch(self, hoursDelta: int = 24, max_items = 20, custom_prompt = None):
+    def Fetch(self):
         if self.logger:
             self.logger.debug("Fetch start")
 
         unread_items = None
         unread_items = self.GetUnreads()
 
-        filtered_items = self.FilterItems(hoursDelta, unread_items)
+        articles = article.Articles(list=unread_items)
 
-        articles = article.Articles(list=filtered_items)
-
-        response = self.summarizer.summarize(articles, max_items=max_items, custom_prompt=custom_prompt)
-
-        return(response)
+        return articles
 
     @retry(stop=stop_after_attempt(3))
     def GetUnreads(self):
@@ -51,13 +45,3 @@ class FreshRSSAggregator():
 
         unread_items = self.api_client.get_unreads()
         return unread_items
-
-    def FilterItems(self, hoursDelta:int, unread_items):
-        now = datetime.datetime.now()
-        threshold_time = now - datetime.timedelta(hours=hoursDelta)
-
-        filtered_items = [
-            item for item in unread_items
-            if datetime.datetime.fromtimestamp(item.created_on_time) > threshold_time]
-
-        return filtered_items
