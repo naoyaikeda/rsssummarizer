@@ -1,20 +1,19 @@
 import os
 import sys
 from os.path import join, dirname
-from FreshRSSAggregator import client
-from dotenv import load_dotenv
-import logging
-import google.generativeai as genai
 import datetime
 import argparse
+import logging
+from typing import TypedDict, Optional
+from dotenv import load_dotenv
+import google.generativeai as genai
 from rich import pretty, print
 from rich.console import Console
 from rich.markdown import Markdown
-from RSSInfra.Summarizer import gemini_summarizer, gemini_summarizer_ex
+from tinydb import TinyDB, Query
+from RSSInfra.Summarizer import gemini_summarizer_ex
 from RSSInfra.Article import article
 from RSSInfra.Fetchers import freshfeed_client
-from tinydb import TinyDB, Query
-from typing import TypedDict, Optional
 
 logger = None
 
