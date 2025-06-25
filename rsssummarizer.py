@@ -11,7 +11,7 @@ from rich import pretty, print
 from rich.console import Console
 from rich.markdown import Markdown
 from tinydb import TinyDB, Query
-from RSSInfra.Summarizer import gemini_summarizer_ex
+from RSSInfra.Summarizer import gemini_summarizer
 from RSSInfra.Article import article
 from RSSInfra.Fetchers import freshfeed_client
 
@@ -93,7 +93,7 @@ def main(logger:logging.Logger):
                 stored_max_items == args.max_items and
                 stored_custom_prompt == args.custom_prompt):
 
-                response = gemini_summarizer_ex.GeminiResult(stored_response_text)
+                response = gemini_summarizer.GeminiResult(stored_response_text)
                 should_fetch_and_summarize = False
                 if logger:
                     logger.info("キャッシュされた要約結果を使用します。")
@@ -107,7 +107,7 @@ def main(logger:logging.Logger):
             should_fetch_and_summarize = True # 再生成を強制
 
     if should_fetch_and_summarize:
-        summarizer = gemini_summarizer_ex.GeminiSummarizer(None, None)
+        summarizer = gemini_summarizer.GeminiSummarizer(None, None)
 
         rssc = freshfeed_client.FreshFeedClient(os.environ.get("HOST"), os.environ.get("USERNAME"), os.environ.get("PASSWORD"), logger=logger)
         unreads = rssc.Fetch()
@@ -117,7 +117,7 @@ def main(logger:logging.Logger):
         if filtered_items and filtered_items.list:
             response = summarizer.summarize(filtered_items, args.max_items, custom_prompt=args.custom_prompt)
         else:
-            response = gemini_summarizer_ex.GeminiResult("要約するニュースはありません。")
+            response = gemini_summarizer.GeminiResult("要約するニュースはありません。")
             if logger:
                 logger.info("要約する記事が見つかりませんでした。")
 

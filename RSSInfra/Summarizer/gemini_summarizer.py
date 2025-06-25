@@ -25,7 +25,7 @@ class GeminiSummarizer():
             self.model_name = os.environ.get("GEMINI_MODEL_NAME")
 
         if self.model_name == None:
-            self.model_name = "gemini-2.0-flash"
+            self.model_name = "gemini-2.5-flash"
 
         self.llm = ChatGoogleGenerativeAI(model = self.model_name, api_key = self.api_key, retry=2)
 
