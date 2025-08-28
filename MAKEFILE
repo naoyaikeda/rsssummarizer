@@ -16,3 +16,6 @@ build:
 # ビルド成果物を削除
 clean:
 	rm -rf build dist *.spec
+
+zip:
+	7z a $(TARGET).zip ./dist/$(TARGET).exe
