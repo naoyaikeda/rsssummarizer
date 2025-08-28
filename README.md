@@ -29,7 +29,14 @@
     cd rsssummarizer
     ```
 
-2.  **必要なライブラリをインストール:**
+2.  **仮想環境の作成と有効化:**
+    ```bash
+    uv venv
+    source .venv/bin/activate  # macOS / Linux
+    .venv\Scripts\activate    # Windows
+    ```
+
+3.  **必要なライブラリをインストール:**
     ```bash
     uv sync
     ```
@@ -100,42 +107,23 @@ python rsssummarizer.py --max_items 10 --custom_prompt "箇条書きで出力し
 .
 ├── .gitignore
 ├── .python-version
-├── MAKEFILE
-├── README.md
-├── RSSInfra
-│   ├── Article
-│   │   └── article.py
-│   ├── Fetchers
-│   │   └── freshfeed_client.py
-│   └── Summarizer
-│       └── gemini_summarizer.py
+├── GEMINI.md
 ├── license.txt
+├── MAKEFILE
 ├── pyproject.toml
+├── README.md
 ├── rsssummarizer.py
+├── RSSInfra/
+│   ├── Article/
+│   │   └── article.py
+│   ├── Fetchers/
+│   │   └── freshfeed_client.py
+│   └── Summarizer/
+│       └── gemini_summarizer.py
 └── uv.lock
 ```
 
 ## ライセンス
 
-Copyright (c) 2025, Naoya Ikeda
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-
-1. Redistributions of source code must retain the above copyright notice, this
-   list of conditions and the following disclaimer.
-
-2. Redistributions in binary form must reproduce the above copyright notice,
-   this list of conditions and a`b`nd the following disclaimer in the documentation
-   and/or other materials provided with the distribution.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDer OR CONTRIBUTORS BE LIABLE
-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+このプロジェクトは [BSD 2-Clause "Simplified" License](./license.txt) の下で公開されています。
+詳細は `license.txt` ファイルをご覧ください。
