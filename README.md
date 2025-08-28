@@ -6,29 +6,27 @@
 
 ## 主な機能
 
-* FreshRSS API (Google Reader API互換) を介してFreshRSSインスタンスに接続します。
-* 未読のRSSアイテムを取得します。
-* 指定された時間範囲（例：過去24時間）に基づいてアイテムをフィルタリングします。
-* フィルタリングされたアイテムのタイトルリストを生成します。
-* Google Gemini API を使用して、タイトルリストの要約を生成します。
-* 設定は環境変数とコマンドライン引数を通じて行います。
+*   **FreshRSS連携**: FreshRSS API (Google Reader API互換) を介してインスタンスに接続し、未読のRSSアイテムを取得します。
+*   **柔軟なフィルタリング**: 指定された時間範囲（例：過去24時間）に基づいてアイテムをフィルタリングします。
+*   **Geminiによる要約**: Google Gemini API を活用し、取得した記事のタイトルリストから簡潔な要約を生成します。
+*   **キャッシュ機能**: 一度生成した要約をキャッシュし、同じ条件での実行時にAPIの不要な再呼び出しを防ぎます。これにより、API使用量とコストを節約できます。
+*   **カスタマイズ可能なプロンプト**: `--custom_prompt` 引数を使用することで、Geminiに与える指示（プロンプト）を自由に変更し、要約の形式や内容を調整できます。
+*   **設定の容易さ**: 設定は `.env` ファイルとコマンドライン引数を通じて簡単に行えます。
 
 ## 要件
 
-* Python 3.x
-* 以下のPythonライブラリ:
-    * `freshrss-api`
-    * `google-generativeai`
-    * `python-dotenv`
-* アクセス可能な FreshRSS インスタンス
-* Google Gemini API キー
+*   Python 3.10以上
+*   アクセス可能な FreshRSS インスタンス
+*   Google Gemini API キー
+
+必要なPythonライブラリは `pyproject.toml` に記載されており、後述する `uv sync` コマンドで全てインストールされます。
 
 ## インストール
 
 1.  **リポジトリをクローン (またはファイルをダウンロード):**
     ```bash
-    git clone <your-repository-url>
-    cd <repository-directory>
+    git clone https://github.com/your-username/rsssummarizer.git
+    cd rsssummarizer
     ```
 
 2.  **必要なライブラリをインストール:**
@@ -45,7 +43,7 @@
     # .env ファイルの例
 
     # FreshRSS インスタンスの GReader API エンドポイントURL
-    # 例: [https://your.freshrss.domain/api/greader.php](https://your.freshrss.domain/api/greader.php)
+    # 例: https://your.freshrss.domain/api/greader.php
     HOST="<Your FreshRSS API Endpoint URL>"
 
     # FreshRSS ユーザー名
@@ -68,33 +66,56 @@
 以下のコマンドを実行してスクリプトを起動します。
 
 ```bash
-python rsssummarizer.py
+python rsssummarizer.py [オプション]
 ```
 
-オプション:
+### オプション
 
-    --delta_hours <時間数>: 何時間前までの未読アイテムを要約対象とするかを指定します。デフォルトは 24 時間です。
-    Bash
+*   `--delta_hours <時間数>`: 何時間前までの未読アイテムを要約対象とするかを指定します。デフォルトは `24` 時間です。
+*   `--max_items <アイテム数>`: 要約に使用するタイトルの最大数を指定します。デフォルトは `20` です。
+*   `--custom_prompt <文字列>`: 要約生成時に使用するカスタムプロンプトを指定します。
+*   `--log_level <レベル>`: ログレベルを `DEBUG` または `INFO` に設定します。デフォルトは `DEBUG` です。
 
-        # 過去48時間分の未読アイテムを要約する場合
-        python rsssummarizer.py --delta_hours 48
+### 使用例
 
-スクリプトは指定された期間の未読アイテムタイトルを取得し、Geminiによって生成された要約をコンソールに出力します。
-ファイル構成 (例)
+```bash
+# 過去48時間分の未読アイテムを要約する
+python rsssummarizer.py --delta_hours 48
 
-rsssummarizer/
-│
+# 要約するアイテム数を10に制限し、特定のプロンプトを使用する
+python rsssummarizer.py --max_items 10 --custom_prompt "箇条書きで出力してください。"
+```
+
+## キャッシュについて
+
+このスクリプトは、生成した要約をキャッシュする機能を備えています。
+
+*   **目的**: 同じパラメータ（期間、アイテム数、カスタムプロンプト）での実行時に、Gemini APIへの不要なリクエストを避け、応答を高速化するためです。
+*   **場所**: キャッシュは、ユーザーのホームディレクトリ配下の `.rsssummarizer/rsssummarizer.db` に保存されます。
+*   **更新タイミング**: 実行時の時刻（時単位）、`delta_hours`, `max_items`, `custom_prompt` のいずれかが前回の実行と異なる場合に、キャッシュは更新（再生成）されます。
+
+## ファイル構成
+
+```
+.
+├── .gitignore
+├── .python-version
+├── MAKEFILE
+├── README.md
 ├── RSSInfra
-│    ├── Fetchers
-│    │   ├── freshfeed_client.py
-│    ├── Fetchers
-│         ├── freshfeed_client.py
-├── rsssummarizer.py           # クライアント/実行スクリプト
-├── .env                    # 環境変数ファイル (Git管理外にすること)
-├── pyproject.toml          #
-└── README.md               # このファイル
+│   ├── Article
+│   │   └── article.py
+│   ├── Fetchers
+│   │   └── freshfeed_client.py
+│   └── Summarizer
+│       └── gemini_summarizer.py
+├── license.txt
+├── pyproject.toml
+├── rsssummarizer.py
+└── uv.lock
+```
 
-ライセンス
+## ライセンス
 
 Copyright (c) 2025, Naoya Ikeda
 
@@ -105,13 +126,13 @@ modification, are permitted provided that the following conditions are met:
    list of conditions and the following disclaimer.
 
 2. Redistributions in binary form must reproduce the above copyright notice,
-   this list of conditions and the following disclaimer in the documentation
+   this list of conditions and a`b`nd the following disclaimer in the documentation
    and/or other materials provided with the distribution.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDer OR CONTRIBUTORS BE LIABLE
 FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
 DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
 SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
