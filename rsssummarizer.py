@@ -61,6 +61,20 @@ def main(logger:logging.Logger):
 
     args = parser.parse_args()
 
+    max_items = None
+    if os.getenv("MAX_ITEMS"):
+        max_items = int(os.getenv("MAX_ITEMS"))
+
+    if max_items == None:
+        max_items = args.max_items
+    
+    custom_prompt = None
+    if os.getenv("CUSTOM_PROMPT"):
+        custom_prompt = os.getenv("CUSTOM_PROMPT")
+    
+    if custom_prompt == None:
+        custom_prompt = args.custom_prompt
+
     log_level = args.log_level
 
     if log_level == 'DEBUG':
@@ -85,13 +99,17 @@ def main(logger:logging.Logger):
             stored_max_items = latest_record.get('maxItems') # 存在しない場合を考慮
             stored_custom_prompt = latest_record.get('custom_prompt') # 存在しない場合を考慮
 
+            logging.debug(f"前回の要約日時: {stored_now}, 現在時刻: {now}, ラップされた現在時刻: {lapped_now}")
+            logging.debug(f"前回の要約条件 - hoursDelta: {stored_hours_delta}, maxItems: {stored_max_items}, custom_prompt: {stored_custom_prompt}")
+            logging.debug(f"現在の要約条件 - hoursDelta: {args.delta_hours}, maxItems: {max_items}, custom_prompt: {custom_prompt}")
+
             # キャッシュが有効かどうかの判定
             if (stored_now.year == lapped_now.year and
                 stored_now.month == lapped_now.month and
                 stored_now.hour == lapped_now.hour and
                 stored_hours_delta == args.delta_hours and
-                stored_max_items == args.max_items and
-                stored_custom_prompt == args.custom_prompt):
+                stored_max_items == max_items and
+                stored_custom_prompt == custom_prompt):
 
                 response = gemini_summarizer.GeminiResult(stored_response_text)
                 should_fetch_and_summarize = False
@@ -115,7 +133,7 @@ def main(logger:logging.Logger):
 
         # 要約する記事がない場合のハンドリングを強化
         if filtered_items and filtered_items.list:
-            response = summarizer.summarize(filtered_items, args.max_items, custom_prompt=args.custom_prompt)
+            response = summarizer.summarize(filtered_items, max_items, custom_prompt=custom_prompt)
         else:
             response = gemini_summarizer.GeminiResult("要約するニュースはありません。")
             if logger:
@@ -127,9 +145,9 @@ def main(logger:logging.Logger):
             "name": "latest",
             "now": now.isoformat(),
             "hoursDelta": args.delta_hours,
-            "maxItems": args.max_items,
+            "maxItems": max_items,
             "response": response.__dict__,
-            "custom_prompt": args.custom_prompt # custom_promptも保存
+            "custom_prompt": custom_prompt # custom_promptも保存
         },
         que.name == 'latest'
     )
