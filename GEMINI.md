@@ -12,5 +12,6 @@
 - 'RSSInfra/': RSSを用いるインフラストラクチャコード
 - 'rsssummarizer.py': rsssummarizerのメインコード
 - 'MAKEFILE': PyInstallerで実行物を生成するMAKEFILE
-- 'pyproject.toml': uvのプロジェクト 
+- 'pyproject.toml': uvのプロジェクト
 - 'README.md': ドキュメント
+- 'CHANGELOG.md': 変更履歴
