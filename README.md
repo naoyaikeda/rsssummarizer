@@ -111,6 +111,7 @@ python rsssummarizer.py --max_items 10 --custom_prompt "箇条書きで出力し
 ├── license.txt
 ├── MAKEFILE
 ├── pyproject.toml
+├── CHANGELOG.md
 ├── README.md
 ├── rsssummarizer.py
 ├── RSSInfra/
