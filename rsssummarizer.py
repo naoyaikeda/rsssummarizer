@@ -42,16 +42,14 @@ def main(logger:logging.Logger):
 
     profile_store = TinyDB(os.path.join(storage_dir, "rsssummarizer.db"))
 
-    load_dotenv(verbose=True)
-
     if getattr(sys, 'frozen', False):
+        # PyInstallerで実行されている場合、実行ファイルと同じディレクトリにあるrsssummarizer.envを読み込む
         base_path = os.path.dirname(sys.executable)
         dotenv_path = join(base_path, 'rsssummarizer.env')
-    else:  # 通常のスクリプト実行時
-        base_path = os.path.dirname(__file__)
-        dotenv_path = join(base_path, '.env')
-
-    load_dotenv(dotenv_path)
+        load_dotenv(dotenv_path)
+    else:
+        # 通常のスクリプトとして実行されている場合、.envファイルを読み込む
+        load_dotenv(verbose=True)
 
     parser = argparse.ArgumentParser(description='Fetch and display information from FreshRSS and Gemini API.')
     parser.add_argument('--delta_hours', type=int, default=24, help='Number of hours to fetch data from.')
