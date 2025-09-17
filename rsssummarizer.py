@@ -56,6 +56,9 @@ def main(logger:logging.Logger):
     parser.add_argument('--max_items', type=int, default=20, help='Number of items to extract')
     parser.add_argument('--custom_prompt', type=str, default=None, help='Custom Prompt')
     parser.add_argument('--log_level', type=str, choices=['DEBUG', "INFO"], default="DEBUG", help='Log Level')
+    parser.add_argument('--clip', action='store_true', help='Save the summary to a file.')
+    parser.add_argument('--clip_dir', type=str, default=None, help='Directory to save the summary file.')
+    parser.add_argument('--clip_name', type=str, default=None, help='Filename pattern for the summary file.')
 
     args = parser.parse_args()
 
@@ -72,6 +75,18 @@ def main(logger:logging.Logger):
     
     if custom_prompt == None:
         custom_prompt = args.custom_prompt
+
+    clip_dir = os.getenv("CLIP_DIR")
+    if args.clip_dir:
+        clip_dir = args.clip_dir
+    if not clip_dir:
+        clip_dir = os.path.join(storage_dir, "clips")
+
+    clip_name = os.getenv("CLIP_NAME")
+    if args.clip_name:
+        clip_name = args.clip_name
+    if not clip_name:
+        clip_name = "%Y-%m-%d-%H.md"
 
     log_level = args.log_level
 
@@ -153,6 +168,36 @@ def main(logger:logging.Logger):
     md = Markdown(response.text)
     
     console.print(md)
+
+    if args.clip:
+        # Format the filename
+        filename = lapped_now.strftime(clip_name)
+        filepath = os.path.join(clip_dir, filename)
+
+        # Check if file exists
+        if os.path.exists(filepath):
+            if logger:
+                logger.info(f"Clip file already exists for this hour: {filepath}. Skipping.")
+        else:
+            # Create directory if it doesn't exist
+            os.makedirs(clip_dir, exist_ok=True)
+
+            # Generate YAML frontmatter
+            date_iso = lapped_now.astimezone().isoformat()
+            frontmatter = f"""---
+tags: [rss, summary]
+date: {date_iso}
+source: FreshRSS + Gemini
+---
+
+"""
+            content_to_write = frontmatter + response.text
+
+            # Write the file
+            with open(filepath, "w", encoding="utf-8") as f:
+                f.write(content_to_write)
+            if logger:
+                logger.info(f"Summary clipped to: {filepath}")
 
 if __name__ == "__main__":
 
