@@ -59,6 +59,8 @@ def main(logger:logging.Logger):
     parser.add_argument('--clip', action='store_true', help='Save the summary to a file.')
     parser.add_argument('--clip_dir', type=str, default=None, help='Directory to save the summary file.')
     parser.add_argument('--clip_name', type=str, default=None, help='Filename pattern for the summary file.')
+    parser.add_argument('--clip_title', type=str, default=None, help='Title for the summary file.')
+    parser.add_argument('--tags', type=str, nargs='+', default=['rss', 'summary'], help='Tags for the summary file.')
 
     args = parser.parse_args()
 
@@ -87,6 +89,12 @@ def main(logger:logging.Logger):
         clip_name = args.clip_name
     if not clip_name:
         clip_name = "%Y-%m-%d-%H.md"
+
+    clip_title = os.getenv("CLIP_TITLE")
+    if args.clip_title:
+        clip_title = args.clip_title
+
+    tags = args.tags
 
     log_level = args.log_level
 
@@ -182,16 +190,28 @@ def main(logger:logging.Logger):
             # Create directory if it doesn't exist
             os.makedirs(clip_dir, exist_ok=True)
 
+            # Prepare tags for frontmatter
+            tags_yaml = ", ".join(tags)
+
             # Generate YAML frontmatter
             date_iso = lapped_now.astimezone().isoformat()
             frontmatter = f"""---
-tags: [rss, summary]
+tags: [{tags_yaml}]
 date: {date_iso}
 source: FreshRSS + Gemini
 ---
 
 """
-            content_to_write = frontmatter + response.text
+            # Prepare title
+            title_text = ""
+            if clip_title:
+                title_text = "# " + lapped_now.strftime(clip_title) + "\n\n"
+            else:
+                # Use filename (without extension) as default title
+                base_filename = os.path.splitext(filename)[0]
+                title_text = "# " + base_filename + "\n\n"
+
+            content_to_write = frontmatter + title_text + response.text
 
             # Write the file
             with open(filepath, "w", encoding="utf-8") as f:
