@@ -4,9 +4,10 @@ class Article:
     subject = None
     created_on_time = None
 
-    def __init__(self, subject:str, created_on_time):
+    def __init__(self, subject:str, link:str, created_on_time):
         self.subject = subject
         self.created_on_time = created_on_time
+        self.link = link
 
 class Articles:
     list = []
@@ -29,8 +30,8 @@ def articlesFromResponse(list = None):
 
     if list:
         for item in list:
-            articles.list.append(Article(item.title, item.created_on_time))
-    
+            articles.list.append(Article(item.title, item.url, item.created_on_time))
+
     return articles
 
 def articlesFromListOfArticle(list = None):
@@ -38,6 +39,6 @@ def articlesFromListOfArticle(list = None):
 
     if list:
         for item in list:
-            articles.list.append(Article(item.subject, item.created_on_time))
+            articles.list.append(Article(item.subject, item.link, item.created_on_time))
 
     return articles
