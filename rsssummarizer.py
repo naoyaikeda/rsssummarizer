@@ -26,7 +26,7 @@ class LatestRecord(TypedDict):
     response: dict # GeminiResult.__dict__ が dict なので dict で定義
     custom_prompt: Optional[str] # custom_prompt は Optional にする
 
-def prepair_storage(profile_dir:str):
+def prepare_storage(profile_dir:str):
     storage_dir = os.path.join(profile_dir, ".rsssummarizer")
 
     if os.path.isdir(storage_dir) == False:
@@ -39,7 +39,7 @@ def main(logger:logging.Logger):
 
     profile_dir = os.path.expanduser('~')
 
-    storage_dir = prepair_storage(profile_dir)
+    storage_dir = prepare_storage(profile_dir)
 
     profile_store = TinyDB(os.path.join(storage_dir, "rsssummarizer.db"))
 
@@ -112,6 +112,7 @@ def main(logger:logging.Logger):
 
     response = None # 最終的な要約結果を格納する変数
     should_fetch_and_summarize = True # 要約を再生成する必要があるかどうかのフラグ
+    fetched_slds = [] # クリップ処理用に必ず定義しておく
 
     if latest_record:
         try:
@@ -135,6 +136,9 @@ def main(logger:logging.Logger):
 
                 response = gemini_summarizer.GeminiResult(stored_response_text)
                 should_fetch_and_summarize = False
+                # キャッシュからホスト情報を復元（保存していれば）
+                if 'hosts_summarized' in latest_record:
+                    fetched_slds = latest_record['hosts_summarized']
                 if logger:
                     logger.info("キャッシュされた要約結果を使用します。")
             else:
@@ -156,7 +160,7 @@ def main(logger:logging.Logger):
         fetched_slds = sorted(set(
             urlparse(url).hostname.split('.')[-2]
             for url in fetched_urls
-            if urlparse(url).hostname and len(urlparse(url).hostname.split('.')) >= 2
+            if urlparse(url).hostname is not None and len(urlparse(url).hostname.split('.')) >= 2
         ))
 
         # 要約する記事がない場合のハンドリングを強化
@@ -166,8 +170,8 @@ def main(logger:logging.Logger):
             response = gemini_summarizer.GeminiResult("要約するニュースはありません。")
             if logger:
                 logger.info("要約する記事が見つかりませんでした。")
+                logger.info("要約する記事が見つかりませんでした。")
 
-    # TinyDB の upsert を使って、存在すれば更新、なければ挿入
     profile_store.upsert(
         {
             "name": "latest",
@@ -175,9 +179,11 @@ def main(logger:logging.Logger):
             "hoursDelta": args.delta_hours,
             "maxItems": max_items,
             "response": response.__dict__,
-            "custom_prompt": custom_prompt # custom_promptも保存
+            "custom_prompt": custom_prompt, # custom_promptも保存
+            "hosts_summarized": fetched_slds # ホスト情報もキャッシュに保存
         },
         que.name == 'latest'
+    )
     )
 
     md = Markdown(response.text)
