@@ -14,6 +14,7 @@ from tinydb import TinyDB, Query
 from RSSInfra.Summarizer import gemini_summarizer
 from RSSInfra.Article import article
 from RSSInfra.Fetchers import freshfeed_client
+from urllib.parse import urlparse
 
 logger = None
 
@@ -30,7 +31,7 @@ def prepair_storage(profile_dir:str):
 
     if os.path.isdir(storage_dir) == False:
         os.mkdir(storage_dir)
-    
+
     return storage_dir
 
 def main(logger:logging.Logger):
@@ -70,11 +71,11 @@ def main(logger:logging.Logger):
 
     if max_items == None:
         max_items = args.max_items
-    
+
     custom_prompt = None
     if os.getenv("CUSTOM_PROMPT"):
         custom_prompt = os.getenv("CUSTOM_PROMPT")
-    
+
     if custom_prompt == None:
         custom_prompt = args.custom_prompt
 
@@ -151,6 +152,12 @@ def main(logger:logging.Logger):
         rssc = freshfeed_client.FreshFeedClient(os.environ.get("HOST"), os.environ.get("USERNAME"), os.environ.get("PASSWORD"), logger=logger)
         unreads = rssc.Fetch()
         filtered_items = unreads.FilterItemsByHoursDelta(hoursDelta=args.delta_hours, now=now)
+        fetched_urls = [item.link for item in filtered_items.list if hasattr(item, "link")]
+        fetched_slds = sorted(set(
+            urlparse(url).hostname.split('.')[-2]
+            for url in fetched_urls
+            if urlparse(url).hostname and len(urlparse(url).hostname.split('.')) >= 2
+        ))
 
         # 要約する記事がない場合のハンドリングを強化
         if filtered_items and filtered_items.list:
@@ -174,7 +181,7 @@ def main(logger:logging.Logger):
     )
 
     md = Markdown(response.text)
-    
+
     console.print(md)
 
     if args.clip:
@@ -190,14 +197,21 @@ def main(logger:logging.Logger):
             # Create directory if it doesn't exist
             os.makedirs(clip_dir, exist_ok=True)
 
+            # Fetch hosts from the articles
+            joined_tags = sorted(set(tags + fetched_slds))
+
             # Prepare tags for frontmatter
-            tags_yaml = ", ".join(tags)
+            tags_yaml = ", ".join(joined_tags)
 
             # Generate YAML frontmatter
             date_iso = lapped_now.astimezone().isoformat()
             frontmatter = f"""---
 tags: [{tags_yaml}]
 date: {date_iso}
+max_items: {max_items}
+hours_delta: {args.delta_hours}
+custom_prompt: {custom_prompt if custom_prompt else "None"}
+hosts_summarized: [{", ".join(fetched_slds)}]
 source: FreshRSS + Gemini
 ---
 
