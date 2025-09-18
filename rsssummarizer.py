@@ -14,6 +14,7 @@ from tinydb import TinyDB, Query
 from RSSInfra.Summarizer import gemini_summarizer
 from RSSInfra.Article import article
 from RSSInfra.Fetchers import freshfeed_client
+from urllib.parse import urlparse
 
 logger = None
 
@@ -25,12 +26,12 @@ class LatestRecord(TypedDict):
     response: dict # GeminiResult.__dict__ が dict なので dict で定義
     custom_prompt: Optional[str] # custom_prompt は Optional にする
 
-def prepair_storage(profile_dir:str):
+def prepare_storage(profile_dir:str):
     storage_dir = os.path.join(profile_dir, ".rsssummarizer")
 
     if os.path.isdir(storage_dir) == False:
         os.mkdir(storage_dir)
-    
+
     return storage_dir
 
 def main(logger:logging.Logger):
@@ -38,7 +39,7 @@ def main(logger:logging.Logger):
 
     profile_dir = os.path.expanduser('~')
 
-    storage_dir = prepair_storage(profile_dir)
+    storage_dir = prepare_storage(profile_dir)
 
     profile_store = TinyDB(os.path.join(storage_dir, "rsssummarizer.db"))
 
@@ -70,11 +71,11 @@ def main(logger:logging.Logger):
 
     if max_items == None:
         max_items = args.max_items
-    
+
     custom_prompt = None
     if os.getenv("CUSTOM_PROMPT"):
         custom_prompt = os.getenv("CUSTOM_PROMPT")
-    
+
     if custom_prompt == None:
         custom_prompt = args.custom_prompt
 
@@ -111,6 +112,7 @@ def main(logger:logging.Logger):
 
     response = None # 最終的な要約結果を格納する変数
     should_fetch_and_summarize = True # 要約を再生成する必要があるかどうかのフラグ
+    fetched_slds = [] # クリップ処理用に必ず定義しておく
 
     if latest_record:
         try:
@@ -134,6 +136,9 @@ def main(logger:logging.Logger):
 
                 response = gemini_summarizer.GeminiResult(stored_response_text)
                 should_fetch_and_summarize = False
+                # キャッシュからホスト情報を復元（保存していれば）
+                if 'hosts_summarized' in latest_record:
+                    fetched_slds = latest_record['hosts_summarized']
                 if logger:
                     logger.info("キャッシュされた要約結果を使用します。")
             else:
@@ -151,6 +156,12 @@ def main(logger:logging.Logger):
         rssc = freshfeed_client.FreshFeedClient(os.environ.get("HOST"), os.environ.get("USERNAME"), os.environ.get("PASSWORD"), logger=logger)
         unreads = rssc.Fetch()
         filtered_items = unreads.FilterItemsByHoursDelta(hoursDelta=args.delta_hours, now=now)
+        fetched_urls = [item.link for item in filtered_items.list if hasattr(item, "link")]
+        fetched_slds = sorted(set(
+            urlparse(url).hostname.split('.')[-2]
+            for url in fetched_urls
+            if urlparse(url).hostname is not None and len(urlparse(url).hostname.split('.')) >= 2
+        ))
 
         # 要約する記事がない場合のハンドリングを強化
         if filtered_items and filtered_items.list:
@@ -159,8 +170,8 @@ def main(logger:logging.Logger):
             response = gemini_summarizer.GeminiResult("要約するニュースはありません。")
             if logger:
                 logger.info("要約する記事が見つかりませんでした。")
+                logger.info("要約する記事が見つかりませんでした。")
 
-    # TinyDB の upsert を使って、存在すれば更新、なければ挿入
     profile_store.upsert(
         {
             "name": "latest",
@@ -168,13 +179,15 @@ def main(logger:logging.Logger):
             "hoursDelta": args.delta_hours,
             "maxItems": max_items,
             "response": response.__dict__,
-            "custom_prompt": custom_prompt # custom_promptも保存
+            "custom_prompt": custom_prompt, # custom_promptも保存
+            "hosts_summarized": fetched_slds # ホスト情報もキャッシュに保存
         },
         que.name == 'latest'
     )
+    )
 
     md = Markdown(response.text)
-    
+
     console.print(md)
 
     if args.clip:
@@ -190,14 +203,21 @@ def main(logger:logging.Logger):
             # Create directory if it doesn't exist
             os.makedirs(clip_dir, exist_ok=True)
 
+            # Fetch hosts from the articles
+            joined_tags = sorted(set(tags + fetched_slds))
+
             # Prepare tags for frontmatter
-            tags_yaml = ", ".join(tags)
+            tags_yaml = ", ".join(joined_tags)
 
             # Generate YAML frontmatter
             date_iso = lapped_now.astimezone().isoformat()
             frontmatter = f"""---
 tags: [{tags_yaml}]
 date: {date_iso}
+max_items: {max_items}
+hours_delta: {args.delta_hours}
+custom_prompt: {custom_prompt if custom_prompt else "None"}
+hosts_summarized: [{", ".join(fetched_slds)}]
 source: FreshRSS + Gemini
 ---
 
