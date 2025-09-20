@@ -4,10 +4,12 @@ class Article:
     subject = None
     created_on_time = None
 
-    def __init__(self, subject:str, link:str, created_on_time):
+    def __init__(self, subject:str, link:str, created_on_time, is_read = False, is_saved = False):
         self.subject = subject
         self.created_on_time = created_on_time
         self.link = link
+        self.is_read = is_read
+        self.is_saved = is_saved
 
 class Articles:
     list = []
@@ -25,12 +27,21 @@ class Articles:
 
         return articlesFromListOfArticle(filtered_items)
 
+    def FilterItemsUnreads(self):
+
+        filtered_items = [
+            item for item in self.list
+            if item.is_read == False]
+
+        return articlesFromListOfArticle(filtered_items)
+
+
 def articlesFromResponse(list = None):
     articles = Articles()
 
     if list:
         for item in list:
-            articles.list.append(Article(item.title, item.url, item.created_on_time))
+            articles.list.append(Article(item.title, item.url, item.created_on_time, item.is_read, item.is_saved))
 
     return articles
 
@@ -39,6 +50,6 @@ def articlesFromListOfArticle(list = None):
 
     if list:
         for item in list:
-            articles.list.append(Article(item.subject, item.link, item.created_on_time))
+            articles.list.append(Article(item.subject, item.link, item.created_on_time, item.is_read, item.is_saved))
 
     return articles

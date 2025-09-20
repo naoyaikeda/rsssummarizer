@@ -2,7 +2,6 @@ import os
 from freshrss_api import FreshRSSAPI
 import logging
 import datetime
-# from RSSInfra.Summarizer import gemini_summarizer, gemini_summarizer_ex
 from RSSInfra.Article import article
 from tenacity import retry, stop_after_attempt, stop_after_delay
 
@@ -27,21 +26,22 @@ class FreshFeedClient():
         if self.logger:
             self.logger.debug("Initialized")
 
-    def Fetch(self):
+    def Fetch(self, delta_hours):
         if self.logger:
             self.logger.debug("Fetch start")
 
         unread_items = None
-        unread_items = self.GetUnreads()
+        unread_items = self.GetWindowed(delta_hours)
 
         articles = article.articlesFromResponse(unread_items)
 
         return articles
 
     @retry(stop=stop_after_attempt(3))
-    def GetUnreads(self):
+    def GetWindowed(self, delta_hours):
         if self.logger:
             self.logger.debug("Fetch one")
 
-        unread_items = self.api_client.get_unreads()
-        return unread_items
+        now = datetime.datetime.now()
+        windowed_items = self.api_client.get_items_from_dates(since = now - datetime.timedelta(hours=24), until = now)
+        return windowed_items

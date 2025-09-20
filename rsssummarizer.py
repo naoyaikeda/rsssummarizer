@@ -41,7 +41,7 @@ def main(logger:logging.Logger):
 
     storage_dir = prepare_storage(profile_dir)
 
-    profile_store = TinyDB(os.path.join(storage_dir, "rsssummarizer.db"))
+    profile_store = TinyDB(os.path.join(storage_dir, "rsssummarizer-ex002.db"))
 
     if getattr(sys, 'frozen', False):
         # PyInstallerで実行されている場合、実行ファイルと同じディレクトリにあるrsssummarizer.envを読み込む
@@ -154,8 +154,8 @@ def main(logger:logging.Logger):
         summarizer = gemini_summarizer.GeminiSummarizer(None, None)
 
         rssc = freshfeed_client.FreshFeedClient(os.environ.get("HOST"), os.environ.get("USERNAME"), os.environ.get("PASSWORD"), logger=logger)
-        unreads = rssc.Fetch()
-        filtered_items = unreads.FilterItemsByHoursDelta(hoursDelta=args.delta_hours, now=now)
+        windowed = rssc.Fetch(args.delta_hours)
+        filtered_items = windowed.FilterItemsUnreads()
         fetched_urls = [item.link for item in filtered_items.list if hasattr(item, "link")]
         fetched_slds = sorted(set(
             urlparse(url).hostname.split('.')[-2]
