@@ -14,6 +14,7 @@ from tinydb import TinyDB, Query
 from RSSInfra.Summarizer import gemini_summarizer
 from RSSInfra.Article import article
 from RSSInfra.Fetchers import freshfeed_client
+from RSSInfra.Embeddings import embedding_client
 from urllib.parse import urlparse
 
 logger = None
@@ -41,7 +42,8 @@ def main(logger:logging.Logger):
 
     storage_dir = prepare_storage(profile_dir)
 
-    profile_store = TinyDB(os.path.join(storage_dir, "rsssummarizer.db"))
+    # Initialize TinyDB
+    profile_store = TinyDB(os.path.join(storage_dir, "rsssummarizer-ex001.db"))
 
     if getattr(sys, 'frozen', False):
         # PyInstallerで実行されている場合、実行ファイルと同じディレクトリにあるrsssummarizer.envを読み込む
@@ -64,6 +66,14 @@ def main(logger:logging.Logger):
     parser.add_argument('--tags', type=str, nargs='+', default=['rss', 'summary'], help='Tags for the summary file.')
 
     args = parser.parse_args()
+
+    embeddings = None
+    embedding_method = os.getenv("EMBEDDING_METHOD", "").lower()
+    embedding_api_key = os.getenv("EMBEDDING_API_KEY")
+    embedding_base_url = os.getenv("EMBEDDING_MODEL_URL")
+    embedding_model = os.getenv("EMBEDDING_MODEL")
+
+    embeddings = embedding_client.InitialzeEmbeddingClient(embedding_model, embedding_base_url, embedding_api_key, embedding_method)
 
     max_items = None
     if os.getenv("MAX_ITEMS"):
@@ -166,6 +176,22 @@ def main(logger:logging.Logger):
         # 要約する記事がない場合のハンドリングを強化
         if filtered_items and filtered_items.list:
             response = summarizer.summarize(filtered_items, max_items, custom_prompt=custom_prompt)
+
+            if embeddings:
+                documents = [item.subject for item in filtered_items.list]
+
+                if logger:
+                    logger.info("要約の埋め込みベクトルを生成しています...")
+                try:
+                    summary_vectors = embeddings.embed_documents(documents)
+
+                    if summary_vectors and len(summary_vectors) > 0:
+                        summary_vector = summary_vectors[0]
+                        if logger:
+                            logger.info(f"埋め込みベクトルの次元数: {len(summary_vector)}")
+                except Exception as e:
+                    if logger:
+                        logger.error(f"埋め込みベクトルの生成中にエラーが発生しました: {e}")
         else:
             response = gemini_summarizer.GeminiResult("要約するニュースはありません。")
             if logger:
