@@ -184,7 +184,6 @@ def main(logger:logging.Logger):
         },
         que.name == 'latest'
     )
-    )
 
     md = Markdown(response.text)
 
