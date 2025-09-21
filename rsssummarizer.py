@@ -34,14 +34,23 @@ def prepare_storage(profile_dir:str):
 
     return storage_dir
 
+def prepare_snapshot_dir(storage_dir:str):
+    snapshot_dir = os.path.join(storage_dir, "snapshots")
+
+    if os.path.isdir(snapshot_dir) == False:
+        os.mkdir(snapshot_dir)
+
+    return snapshot_dir
+
 def main(logger:logging.Logger):
     console = Console()
 
     profile_dir = os.path.expanduser('~')
 
     storage_dir = prepare_storage(profile_dir)
+    snapshot_dir = prepare_snapshot_dir(storage_dir)
 
-    profile_store = TinyDB(os.path.join(storage_dir, "rsssummarizer-ex002.db"))
+    profile_store = TinyDB(os.path.join(storage_dir, "rsssummarizer-ex003.db"))
 
     if getattr(sys, 'frozen', False):
         # PyInstallerで実行されている場合、実行ファイルと同じディレクトリにあるrsssummarizer.envを読み込む
