@@ -64,6 +64,12 @@
 
     # (任意) 使用する Gemini モデル名 (デフォルトはコード内で指定されています)
     GEMINI_MODEL_NAME="gemini-1.5-flash" # 例: gemini-1.5-flash, gemini-pro など
+
+    # (任意) カスタムプロンプト
+    CUSTOM_PROMPT="<CUSTOM PROMPT>"
+
+    # (任意) クリッピング先
+    CLIP_DIR="<CLIP DIR>"
     ```
 
     **重要:** FreshRSSのAPIパスワードは、通常のログインパスワードではなく、FreshRSSの設定画面で生成した専用のAPIパスワードを使用してください。
@@ -82,6 +88,8 @@ python rsssummarizer.py [オプション]
 *   `--max_items <アイテム数>`: 要約に使用するタイトルの最大数を指定します。デフォルトは `20` です。
 *   `--custom_prompt <文字列>`: 要約生成時に使用するカスタムプロンプトを指定します。
 *   `--log_level <レベル>`: ログレベルを `DEBUG` または `INFO` に設定します。デフォルトは `DEBUG` です。
+*   `--clip_dir <クリッピング先>`: クリッピング先を指定します。
+*   `--clip`: クリッピングします。
 
 ### 使用例
 
