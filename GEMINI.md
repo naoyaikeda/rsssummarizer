@@ -9,9 +9,12 @@
 
 # ファイル構成
 
-- 'RSSInfra/': RSSを用いるインフラストラクチャコード
-- 'rsssummarizer.py': rsssummarizerのメインコード
-- 'MAKEFILE': PyInstallerで実行物を生成するMAKEFILE
-- 'pyproject.toml': uvのプロジェクト
-- 'README.md': ドキュメント
-- 'CHANGELOG.md': 変更履歴
+- '[RSSInfra/](RSSInfra/)': RSSを用いるインフラストラクチャコード
+- '[rsssummarizer.py](rsssummarizer.py)': rsssummarizerのメインコード
+- '[MAKEFILE](MAKEFILE)': PyInstallerで実行物を生成するMAKEFILE
+- '[pyproject.toml](pyproject.toml)': uvのプロジェクト
+- '[README.md](README.md)': ドキュメント
+- '[CHANGELOG.md](CHANGELOG.md)': 変更履歴
+- '[VERSION](VERSION)': バージョン情報
+- '[license.txt](license.txt)': ライセンス
+- '[rsssummarizer.env](rsssummarizer.env)': 環境変数設定ファイル

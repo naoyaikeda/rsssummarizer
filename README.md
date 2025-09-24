@@ -113,22 +113,23 @@ python rsssummarizer.py --max_items 10 --custom_prompt "箇条書きで出力し
 
 ```
 .
-├── .gitignore
-├── .python-version
-├── GEMINI.md
-├── license.txt
-├── MAKEFILE
-├── pyproject.toml
 ├── CHANGELOG.md
+├── GEMINI.md
+├── MAKEFILE
 ├── README.md
-├── rsssummarizer.py
-├── RSSInfra/
-│   ├── Article/
+├── RSSInfra
+│   ├── Article
 │   │   └── article.py
-│   ├── Fetchers/
+│   ├── Fetchers
 │   │   └── freshfeed_client.py
-│   └── Summarizer/
+│   └── Summarizer
 │       └── gemini_summarizer.py
+├── VERSION
+├── license.txt
+├── pyproject.toml
+├── rsssummarizer.env
+├── rsssummarizer.py
+├── testcode.py
 └── uv.lock
 ```
 
