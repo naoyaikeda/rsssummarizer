@@ -62,7 +62,7 @@ class GeminiSummarizer():
 
         chain = prompt_template | self.llm | output_parser
 
-        subjects = [ item.subject for item in items.list ]
+        subjects = [ item.subject + "<" + item.link + ">" for item in items.list ]
 
         str_subjects = "\n".join(subjects)
 
