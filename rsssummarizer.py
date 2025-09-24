@@ -1,9 +1,11 @@
+import pandas as pd
 import os
 import sys
 from os.path import join, dirname
 import datetime
 import argparse
 import logging
+import json
 from typing import TypedDict, Optional
 from dotenv import load_dotenv
 import google.generativeai as genai
@@ -42,6 +44,25 @@ def prepare_snapshot_dir(storage_dir:str):
 
     return snapshot_dir
 
+def create_snapshot(snapshot_dir:str, windowed, lapped_now:datetime.datetime, logger:logging.Logger):
+    if windowed and windowed.list and len(windowed.list) > 0:
+        filename = lapped_now.strftime("%Y-%m-%d-%H.json")
+        filepath = os.path.join(snapshot_dir, filename)
+
+        if os.path.exists(filepath):
+            if logger:
+                logger.info(f"Snapshot file already exists for this hour: {filepath}. Skipping.")
+        else:
+            list_to_save = [{"title":item.subject, "issued":item.created_on_time, "link":item.link, "is_read":item.is_read, "is_saved":item.is_saved} for item in windowed.list]
+            with open(filepath, "w", encoding="utf-8") as f:
+                json.dump(list_to_save, f, ensure_ascii=False, indent=4)
+
+            if logger:
+                logger.info(f"Snapshot created: {filepath}")
+    else:
+        if logger:
+            logger.info("No articles to snapshot.")
+
 def main(logger:logging.Logger):
     console = Console()
 
@@ -71,6 +92,7 @@ def main(logger:logging.Logger):
     parser.add_argument('--clip_name', type=str, default=None, help='Filename pattern for the summary file.')
     parser.add_argument('--clip_title', type=str, default=None, help='Title for the summary file.')
     parser.add_argument('--tags', type=str, nargs='+', default=['rss', 'summary'], help='Tags for the summary file.')
+    parser.add_argument('--save_snap', action='store_true', help='Save snapshot to file.')
 
     args = parser.parse_args()
 
@@ -164,6 +186,10 @@ def main(logger:logging.Logger):
 
         rssc = freshfeed_client.FreshFeedClient(os.environ.get("HOST"), os.environ.get("USERNAME"), os.environ.get("PASSWORD"), logger=logger)
         windowed = rssc.Fetch(args.delta_hours)
+
+        if args.save_snap:
+            create_snapshot(snapshot_dir, windowed, lapped_now, logger)
+
         filtered_items = windowed.FilterItemsUnreads()
         fetched_urls = [item.link for item in filtered_items.list if hasattr(item, "link")]
         fetched_slds = sorted(set(
