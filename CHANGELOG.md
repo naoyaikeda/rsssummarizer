@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2025-10-03
+
+### Added
+
+- さくらインターネットの生成AI API (`sakura`) を使用した要約機能を追加。
+- `.env` ファイルで `SUMMARIZE_METHOD` を `sakura` に設定することで利用可能。
+
+### Changed
+
+- `README.md` を全面的に見直し、最新の機能に合わせて内容を更新。
+  - `sakura` 要約機能に関する説明を追加。
+  - コマンドライン引数 (`--clip_name`, `--clip_title`, `--tags`) の説明を追記。
+  - `.env` ファイルの設定例を更新。
+  - キャッシュの更新条件に `summarize_method` を含めることを明記。
+- ファイル構成のタイポを修正。
+
 ## [0.4.2] - 2025-09-23
 
 ### Changed
