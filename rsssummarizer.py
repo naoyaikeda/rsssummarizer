@@ -72,9 +72,9 @@ def main(logger:logging.Logger):
     delta_hours = None
     if os.getenv("DELTA_HOURS"):
         delta_hours = int(os.getenv("DELTA_HOURS"))
-    else:
+    if args.delta_hours:
         delta_hours = args.delta_hours
-    
+
     if delta_hours == None:
         delta_hours = 24
 
