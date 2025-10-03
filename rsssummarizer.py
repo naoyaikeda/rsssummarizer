@@ -11,7 +11,7 @@ from rich import pretty, print
 from rich.console import Console
 from rich.markdown import Markdown
 from tinydb import TinyDB, Query
-from RSSInfra.Summarizer import gemini_summarizer
+from RSSInfra.Summarizer import gemini_summarizer, sakura_summarizer
 from RSSInfra.Article import article
 from RSSInfra.Fetchers import freshfeed_client
 from urllib.parse import urlparse
@@ -78,6 +78,8 @@ def main(logger:logging.Logger):
 
     if custom_prompt == None:
         custom_prompt = args.custom_prompt
+
+    summarizer_method = os.getenv("SUMMARIZE_METHOD")
 
     clip_dir = os.getenv("CLIP_DIR")
     if args.clip_dir:
@@ -151,7 +153,15 @@ def main(logger:logging.Logger):
             should_fetch_and_summarize = True # 再生成を強制
 
     if should_fetch_and_summarize:
-        summarizer = gemini_summarizer.GeminiSummarizer(None, None)
+        summarizer = None
+        if summarizer_method == 'gemini':
+            summarizer = gemini_summarizer.GeminiSummarizer(None, None)
+        if summarizer_method == 'sakura':
+            summarizer = sakura_summarizer.SakuraSummarizer(None, None)
+        else:
+            if logger:
+                logger.info("要約方法が指定されていないか、認識されません。'gemini'を使用します。")
+            summarizer = gemini_summarizer.GeminiSummarizer(None, None)
 
         rssc = freshfeed_client.FreshFeedClient(os.environ.get("HOST"), os.environ.get("USERNAME"), os.environ.get("PASSWORD"), logger=logger)
         windowed = rssc.Fetch(args.delta_hours)
@@ -165,11 +175,14 @@ def main(logger:logging.Logger):
 
         # 要約する記事がない場合のハンドリングを強化
         if filtered_items and filtered_items.list:
-            response = summarizer.summarize(filtered_items, max_items, custom_prompt=custom_prompt)
+            if summarizer_method == "gemini":
+                response = summarizer.summarize(filtered_items, max_items, custom_prompt=custom_prompt)
+            if summarizer_method == "sakura":
+                response = summarizer.summarize(filtered_items, max_items, custom_prompt=custom_prompt)
+            else:
+                response = summarizer.summarize(filtered_items, max_items, custom_prompt=custom_prompt)
         else:
-            response = gemini_summarizer.GeminiResult("要約するニュースはありません。")
             if logger:
-                logger.info("要約する記事が見つかりませんでした。")
                 logger.info("要約する記事が見つかりませんでした。")
 
     profile_store.upsert(

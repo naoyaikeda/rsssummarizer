@@ -11,6 +11,7 @@ wheels/
 
 # dot-env
 .env
+.env.*
 
 # release module
 

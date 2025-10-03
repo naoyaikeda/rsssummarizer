@@ -12,6 +12,7 @@ dependencies = [
     "langchain>=0.3.25",
     "langchain-community>=0.3.25",
     "langchain-google-genai>=2.0.10",
+    "langchain-openai>=0.3.34",
     "loguru>=0.7.3",
     "pyinstaller>=6.13.0",
     "requests>=2.32.3",

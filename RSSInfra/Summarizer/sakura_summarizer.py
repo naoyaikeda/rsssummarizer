@@ -1,33 +1,33 @@
 import os
 import logging
 import datetime
-from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_community.llms.openllm import OpenLLM
 from langchain.prompts import ChatPromptTemplate
 from langchain.schema.output_parser import StrOutputParser
 from RSSInfra.Article import article
+from RSSInfra.Summarizer import gemini_summarizer
 
-class GeminiResult():
-    text = None
 
-    def __init__(self, text):
-        self.text = text
-    
-class GeminiSummarizer():
+class SakuraSummarizer():
     def __init__(self, api_key:str, model_name:str):
         self.model_name = model_name
         self.api_key = api_key
         self.llm = None
+        self.temperature = None
 
         if self.api_key == None:
             self.api_key = os.environ.get("API_KEY")
 
         if self.model_name == None:
             self.model_name = os.environ.get("MODEL_NAME")
+        
+        if self.temperature == None:
+            self.temperature = float(os.environ.get("TEMPERATURE", "0.7"))
 
         if self.model_name == None:
-            self.model_name = "gemini-2.5-flash"
+            raise ValueError("MODEL_NAME must be specified either as a parameter or as an environment variable.")
 
-        self.llm = ChatGoogleGenerativeAI(model = self.model_name, api_key = self.api_key, retry=2)
+        self.llm = OpenLLM(base_url='https://api.ai.sakura.ad.jp/v1/chat',model = self.model_name, temperature = self.temperature, api_key = self.api_key, max_retries=2)
 
     def summarize(self, items:article.Articles, max_items = 20, custom_prompt = None):
         if custom_prompt == None:
@@ -76,6 +76,6 @@ class GeminiSummarizer():
         else:
             response = chain.invoke({"titles": subjects, "max_items": max_items, "custom_prompt": custom_prompt})
 
-        result = GeminiResult(response)
+        result = gemini_summarizer.GeminiResult(response)
 
         return result
