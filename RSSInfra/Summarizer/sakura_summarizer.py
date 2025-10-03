@@ -66,6 +66,14 @@ class SakuraSummarizer():
 
         str_subjects = "\n".join(subjects)
 
+        # トークン数オーバーを避けるため、入力文字列が長すぎる場合は切り詰める
+        # gpt-oss-120b のコンテキスト長は 16384 トークン。安全マージンを見て文字数で制限
+        # 1文字=1トークンではないが、大まかな目安として15000文字で制限
+        max_prompt_length = 15000
+        if len(str_subjects) > max_prompt_length:
+            logging.warning(f"プロンプトが長すぎるため、{max_prompt_length}文字に切り詰めます。元の文字数: {len(str_subjects)}")
+            str_subjects = str_subjects[:max_prompt_length]
+
         response = self.invoke(str_subjects, chain, max_items, custom_prompt)
 
         return response
