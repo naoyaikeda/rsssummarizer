@@ -43,5 +43,5 @@ class FreshFeedClient():
             self.logger.debug("Fetch one")
 
         now = datetime.datetime.now()
-        windowed_items = self.api_client.get_items_from_dates(since = now - datetime.timedelta(hours=24), until = now)
+        windowed_items = self.api_client.get_items_from_dates(since = now - datetime.timedelta(hours=delta_hours), until = now)
         return windowed_items
