@@ -59,11 +59,20 @@
     # FreshRSS API パスワード (注意: FreshRSSの設定 > プロフィール > API管理 で生成したパスワードを使用してください)
     PASSWORD="<Your FreshRSS API Password>"
 
-    # Google Gemini API キー
-    GEMINI_API_KEY="<Your Google Gemini API Key>"
+    # 要約メソッド (geminiもしくはsakura)
+    SUMMARIZE_METHOD="gemini"
 
-    # (任意) 使用する Gemini モデル名 (デフォルトはコード内で指定されています)
-    GEMINI_MODEL_NAME="gemini-1.5-flash" # 例: gemini-1.5-flash, gemini-pro など
+    # API キー
+    API_KEY="<Your Google Gemini API Key>"
+
+    # プロンプトの最大長を指定
+    MAX_CHARS=300000
+
+    # 何時間前までの未読アイテムを要約対象とするかを指定
+    DELTA_HOURS=24
+
+    # (任意) 使用する モデル名 (デフォルトはコード内で指定されています)
+    MODEL_NAME="gemini-1.5-flash" # 例: gemini-1.5-flash, gemini-pro など
 
     # (任意) カスタムプロンプト
     CUSTOM_PROMPT="<CUSTOM PROMPT>"
@@ -124,6 +133,7 @@ python rsssummarizer.py --max_items 10 --custom_prompt "箇条書きで出力し
 │   │   └── freshfeed_client.py
 │   └── Summarizer
 │       └── gemini_summarizer.py
+│       └── sakura_summarizer.py
 ├── VERSION
 ├── license.txt
 ├── pyproject.toml
