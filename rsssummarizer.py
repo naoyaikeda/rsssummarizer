@@ -53,7 +53,7 @@ def main(logger:logging.Logger):
         load_dotenv(verbose=True)
 
     parser = argparse.ArgumentParser(description='Fetch and display information from FreshRSS and Gemini API.')
-    parser.add_argument('--delta_hours', type=int, default=24, help='Number of hours to fetch data from.')
+    parser.add_argument('--delta_hours', type=int, default=None, help='Number of hours to fetch data from.')
     parser.add_argument('--max_items', type=int, default=20, help='Number of items to extract')
     parser.add_argument('--custom_prompt', type=str, default=None, help='Custom Prompt')
     parser.add_argument('--log_level', type=str, choices=['DEBUG', "INFO"], default="DEBUG", help='Log Level')
@@ -68,6 +68,15 @@ def main(logger:logging.Logger):
     max_items = None
     if os.getenv("MAX_ITEMS"):
         max_items = int(os.getenv("MAX_ITEMS"))
+    
+    delta_hours = None
+    if os.getenv("DELTA_HOURS"):
+        delta_hours = int(os.getenv("DELTA_HOURS"))
+    else:
+        delta_hours = args.delta_hours
+    
+    if delta_hours == None:
+        delta_hours = 24
 
     if max_items == None:
         max_items = args.max_items
@@ -123,6 +132,7 @@ def main(logger:logging.Logger):
             stored_hours_delta = latest_record.get('hoursDelta') # 存在しない場合を考慮
             stored_max_items = latest_record.get('maxItems') # 存在しない場合を考慮
             stored_custom_prompt = latest_record.get('custom_prompt') # 存在しない場合を考慮
+            stored_summarize_method = latest_record.get('summarize_method', 'gemini') # 存在しない場合を考慮
 
             logging.debug(f"前回の要約日時: {stored_now}, 現在時刻: {now}, ラップされた現在時刻: {lapped_now}")
             logging.debug(f"前回の要約条件 - hoursDelta: {stored_hours_delta}, maxItems: {stored_max_items}, custom_prompt: {stored_custom_prompt}")
@@ -132,8 +142,9 @@ def main(logger:logging.Logger):
             if (stored_now.year == lapped_now.year and
                 stored_now.month == lapped_now.month and
                 stored_now.hour == lapped_now.hour and
-                stored_hours_delta == args.delta_hours and
+                stored_hours_delta == delta_hours and
                 stored_max_items == max_items and
+                stored_summarize_method == summarizer_method and
                 stored_custom_prompt == custom_prompt):
 
                 response = gemini_summarizer.GeminiResult(stored_response_text)
@@ -164,7 +175,7 @@ def main(logger:logging.Logger):
             summarizer = gemini_summarizer.GeminiSummarizer(None, None)
 
         rssc = freshfeed_client.FreshFeedClient(os.environ.get("HOST"), os.environ.get("USERNAME"), os.environ.get("PASSWORD"), logger=logger)
-        windowed = rssc.Fetch(args.delta_hours)
+        windowed = rssc.Fetch(delta_hours)
         filtered_items = windowed.FilterItemsUnreads()
         fetched_urls = [item.link for item in filtered_items.list if hasattr(item, "link")]
         fetched_slds = sorted(set(
@@ -187,9 +198,10 @@ def main(logger:logging.Logger):
 
     profile_store.upsert(
         {
+            "summarize_method": summarizer_method,
             "name": "latest",
             "now": now.isoformat(),
-            "hoursDelta": args.delta_hours,
+            "hoursDelta": delta_hours,
             "maxItems": max_items,
             "response": response.__dict__,
             "custom_prompt": custom_prompt, # custom_promptも保存
@@ -230,6 +242,7 @@ max_items: {max_items}
 hours_delta: {args.delta_hours}
 custom_prompt: {custom_prompt if custom_prompt else "None"}
 hosts_summarized: [{", ".join(fetched_slds)}]
+summarize_method: {summarizer_method}
 source: FreshRSS + Gemini
 ---
 

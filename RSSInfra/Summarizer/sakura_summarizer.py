@@ -27,7 +27,7 @@ class SakuraSummarizer():
         if self.model_name == None:
             raise ValueError("MODEL_NAME must be specified either as a parameter or as an environment variable.")
 
-        self.llm = ChatOpenAI(base_url='https://api.ai.sakura.ad.jp/v1',model = self.model_name, temperature = self.temperature, api_key = self.api_key, max_retries=2, max_tokens=4096)
+        self.llm = ChatOpenAI(base_url='https://api.ai.sakura.ad.jp/v1',model = self.model_name, temperature = self.temperature, api_key = self.api_key, max_retries=2, max_tokens=131072)
 
     def summarize(self, items:article.Articles, max_items = 20, custom_prompt = None):
         if custom_prompt == None:
@@ -69,7 +69,7 @@ class SakuraSummarizer():
         # トークン数オーバーを避けるため、入力文字列が長すぎる場合は切り詰める
         # gpt-oss-120b のコンテキスト長は 16384 トークン。安全マージンを見て文字数で制限
         # 1文字=1トークンではないが、大まかな目安として15000文字で制限
-        max_prompt_length = 15000
+        max_prompt_length = 300000
         if len(str_subjects) > max_prompt_length:
             logging.warning(f"プロンプトが長すぎるため、{max_prompt_length}文字に切り詰めます。元の文字数: {len(str_subjects)}")
             str_subjects = str_subjects[:max_prompt_length]
