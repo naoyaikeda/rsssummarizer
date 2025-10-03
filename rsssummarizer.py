@@ -75,8 +75,17 @@ def main(logger:logging.Logger):
     if args.delta_hours:
         delta_hours = args.delta_hours
 
+    log_level = args.log_level
+
+    if log_level == 'DEBUG':
+        logger.setLevel(logging.DEBUG)
+    elif log_level == 'INFO':
+        logger.setLevel(logging.INFO)
+
     if delta_hours == None:
         delta_hours = 24
+
+    logging.debug(f"Delta Hours: {delta_hours}, Max Items: {max_items}")
 
     if max_items == None:
         max_items = args.max_items
@@ -107,13 +116,6 @@ def main(logger:logging.Logger):
         clip_title = args.clip_title
 
     tags = args.tags
-
-    log_level = args.log_level
-
-    if log_level == 'DEBUG':
-        logger.setLevel(logging.DEBUG)
-    elif log_level == 'INFO':
-        logger.setLevel(logging.INFO)
 
     que = Query()
     latest_record: Optional[LatestRecord] = profile_store.get(que.name == 'latest')
@@ -167,7 +169,7 @@ def main(logger:logging.Logger):
         summarizer = None
         if summarizer_method == 'gemini':
             summarizer = gemini_summarizer.GeminiSummarizer(None, None)
-        if summarizer_method == 'sakura':
+        elif summarizer_method == 'sakura':
             summarizer = sakura_summarizer.SakuraSummarizer(None, None)
         else:
             if logger:
