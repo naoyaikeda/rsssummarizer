@@ -27,7 +27,7 @@ class SakuraSummarizer():
         if self.model_name == None:
             raise ValueError("MODEL_NAME must be specified either as a parameter or as an environment variable.")
 
-        self.llm = ChatOpenAI(base_url='https://api.ai.sakura.ad.jp/v1',model = self.model_name, temperature = self.temperature, api_key = self.api_key, max_retries=2)
+        self.llm = ChatOpenAI(base_url='https://api.ai.sakura.ad.jp/v1',model = self.model_name, temperature = self.temperature, api_key = self.api_key, max_retries=2, max_tokens=4096)
 
     def summarize(self, items:article.Articles, max_items = 20, custom_prompt = None):
         if custom_prompt == None:
