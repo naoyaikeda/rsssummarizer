@@ -11,7 +11,7 @@ from rich import pretty, print
 from rich.console import Console
 from rich.markdown import Markdown
 from tinydb import TinyDB, Query
-from RSSInfra.Summarizer import gemini_summarizer, sakura_summarizer
+from RSSInfra.Summarizer import gemini_summarizer, sakura_summarizer, openai_summarizer, custom_summarizer
 from RSSInfra.Article import article
 from RSSInfra.Fetchers import freshfeed_client
 from urllib.parse import urlparse
@@ -171,6 +171,10 @@ def main(logger:logging.Logger):
             summarizer = gemini_summarizer.GeminiSummarizer(None, None)
         elif summarizer_method == 'sakura':
             summarizer = sakura_summarizer.SakuraSummarizer(None, None)
+        elif summarizer_method == 'openai':
+            summarizer = openai_summarizer.OpenAISummarizer(None, None)
+        elif summarizer_method == 'custom':
+            summarizer = custom_summarizer.CustomSummarizer(None, None)
         else:
             if logger:
                 logger.info("要約方法が指定されていないか、認識されません。'gemini'を使用します。")
@@ -192,6 +196,10 @@ def main(logger:logging.Logger):
                 response = summarizer.summarize(filtered_items, max_items, custom_prompt=custom_prompt)
             if summarizer_method == "sakura":
                 response = summarizer.summarize(filtered_items, max_items, custom_prompt=custom_prompt)
+            if summarizer_method == "openai":
+                response = summarizer.summarize(filtered_items, max_items, custom_prompt=custom_prompt)
+            if summarizer_method == "custom":
+                response = summarizer.summarize(filtered_items, max_items, custom_prompt=custom_prompt) 
             else:
                 response = summarizer.summarize(filtered_items, max_items, custom_prompt=custom_prompt)
         else:
@@ -245,7 +253,7 @@ hours_delta: {args.delta_hours}
 custom_prompt: {custom_prompt if custom_prompt else "None"}
 hosts_summarized: [{", ".join(fetched_slds)}]
 summarize_method: {summarizer_method}
-source: FreshRSS + Gemini
+source: FreshRSS + {summarizer_method}
 ---
 
 """
