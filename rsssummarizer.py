@@ -62,13 +62,15 @@ def main(logger:logging.Logger):
     parser.add_argument('--clip_name', type=str, default=None, help='Filename pattern for the summary file.')
     parser.add_argument('--clip_title', type=str, default=None, help='Title for the summary file.')
     parser.add_argument('--tags', type=str, nargs='+', default=['rss', 'summary'], help='Tags for the summary file.')
+    parser.add_argument('--ignore_read', action='store_true', help='Ignoring read flag')
 
     args = parser.parse_args()
+    ignore_read = False
 
     max_items = None
     if os.getenv("MAX_ITEMS"):
         max_items = int(os.getenv("MAX_ITEMS"))
-    
+
     delta_hours = None
     if os.getenv("DELTA_HOURS"):
         delta_hours = int(os.getenv("DELTA_HOURS"))
@@ -114,6 +116,9 @@ def main(logger:logging.Logger):
     clip_title = os.getenv("CLIP_TITLE")
     if args.clip_title:
         clip_title = args.clip_title
+
+    if args.ignore_read:
+        ignore_read = True
 
     tags = args.tags
 
@@ -182,7 +187,10 @@ def main(logger:logging.Logger):
 
         rssc = freshfeed_client.FreshFeedClient(os.environ.get("HOST"), os.environ.get("USERNAME"), os.environ.get("PASSWORD"), logger=logger)
         windowed = rssc.Fetch(delta_hours)
-        filtered_items = windowed.FilterItemsUnreads()
+        if not ignore_read:
+            filtered_items = windowed.FilterItemsUnreads()
+        else:
+            filtered_items = windowed
         fetched_urls = [item.link for item in filtered_items.list if hasattr(item, "link")]
         fetched_slds = sorted(set(
             urlparse(url).hostname.split('.')[-2]
@@ -199,7 +207,7 @@ def main(logger:logging.Logger):
             if summarizer_method == "openai":
                 response = summarizer.summarize(filtered_items, max_items, custom_prompt=custom_prompt)
             if summarizer_method == "custom":
-                response = summarizer.summarize(filtered_items, max_items, custom_prompt=custom_prompt) 
+                response = summarizer.summarize(filtered_items, max_items, custom_prompt=custom_prompt)
             else:
                 response = summarizer.summarize(filtered_items, max_items, custom_prompt=custom_prompt)
         else:
@@ -283,4 +291,3 @@ if __name__ == "__main__":
     logger = logging.getLogger(__name__) # 正しくロガーインスタンスを取得
 
     main(logger=logger)
-
